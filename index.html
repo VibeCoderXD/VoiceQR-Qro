@@ -11,19 +11,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root {
-  --bg: #0a0a0f;
-  --surface: #13131a;
-  --surface2: #1c1c26;
-  --surface3: #242433;
-  --accent: #c8a96e;
-  --accent2: #e8c98e;
-  --accent-glow: rgba(200,169,110,0.15);
-  --text: #f0ede6;
-  --muted: #6b6b7e;
-  --muted2: #9999aa;
-  --success: #5ecba1;
-  --danger: #e05c6a;
-  --info: #6ea8c8;
+  --bg: #fdfcf8;
+  --surface: #ffffff;
+  --surface2: #f4f3ee;
+  --surface3: #e9e8e0;
+  --accent: #b08d4b;
+  --accent2: #d4b882;
+  --accent-glow: rgba(176,141,75,0.08);
+  --text: #1c1c1e;
+  --muted: #8e8e93;
+  --muted2: #636366;
+  --success: #34c759;
+  --danger: #ff3b30;
+  --info: #007aff;
   --radius: 22px;
   --radius-sm: 14px;
 }
@@ -56,22 +56,22 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(80px);
-  opacity: 0.06;
+  opacity: 0.12;
 }
 .ambient-orb-1 {
   width: 400px; height: 400px;
-  background: var(--accent);
+  background: var(--accent2);
   top: -100px; right: -100px;
 }
 .ambient-orb-2 {
   width: 300px; height: 300px;
-  background: #6e8bc8;
+  background: #cbd5e8;
   bottom: 100px; left: -80px;
 }
 .grain {
   position: fixed;
   inset: 0;
-  opacity: 0.03;
+  opacity: 0.04;
   pointer-events: none;
   z-index: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -185,7 +185,8 @@ body {
   border-radius: var(--radius);
   padding: 26px 22px;
   margin-bottom: 14px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,0,0,0.03);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
   display: none;
   animation: fadeUp 0.45s cubic-bezier(0.22,1,0.36,1);
 }
@@ -283,7 +284,7 @@ body {
   border: none;
   cursor: pointer;
   background: linear-gradient(145deg, var(--accent), var(--accent2));
-  box-shadow: 0 12px 40px rgba(200,169,110,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 12px 40px rgba(176,141,75,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
   display: flex; align-items: center; justify-content: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   position: relative; z-index: 2;
@@ -335,7 +336,7 @@ body {
 textarea {
   width: 100%;
   background: var(--surface2);
-  border: 1.5px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-sm);
   padding: 16px;
   color: var(--text);
@@ -374,7 +375,7 @@ textarea::placeholder { color: var(--muted); }
   padding: 14px 16px;
   background: var(--surface2);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,0,0,0.05);
   transition: all 0.3s ease;
 }
 .proc-step.active-step {
@@ -676,7 +677,7 @@ audio {
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,0,0,0.03);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -710,10 +711,10 @@ audio {
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  background: rgba(10,10,15,0.9);
+  background: rgba(255,255,255,0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(0,0,0,0.05);
   display: flex;
   padding: 10px 20px 20px;
   gap: 0;
@@ -844,13 +845,13 @@ audio {
           <div class="ring ring-3" id="ring3"></div>
           <button class="record-btn" id="record-btn" onclick="toggleRecord()">
             <svg id="mic-svg" width="42" height="42" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="2" width="6" height="12" rx="3" fill="#0a0a0f"/>
-              <path d="M5 10a7 7 0 0014 0" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="12" y1="19" x2="12" y2="22" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
-              <line x1="8" y1="22" x2="16" y2="22" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
+              <rect x="9" y="2" width="6" height="12" rx="3" fill="#ffffff"/>
+              <path d="M5 10a7 7 0 0014 0" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="12" y1="19" x2="12" y2="22" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="8" y1="22" x2="16" y2="22" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
             <svg id="stop-svg" width="34" height="34" viewBox="0 0 24 24" fill="none" style="display:none">
-              <rect x="5" y="5" width="14" height="14" rx="3" fill="#0a0a0f"/>
+              <rect x="5" y="5" width="14" height="14" rx="3" fill="#ffffff"/>
             </svg>
           </button>
         </div>
