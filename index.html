@@ -1404,8 +1404,6 @@ setTimeout(() => {
   const fileInput = document.getElementById('file-input');
   if (!dropZone || !fileInput) return;
 
-  dropZone.addEventListener('click', () => fileInput.click());
-
   fileInput.addEventListener('change', e => {
     if (e.target.files[0]) handleFileSelect(e.target.files[0]);
   });
