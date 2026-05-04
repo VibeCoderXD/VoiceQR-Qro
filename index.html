@@ -148,7 +148,11 @@ body {
   z-index: 2;
 }
 .step-circle {
-  width: 28px; height: 28px;
+  width: 28px !important; 
+  height: 28px !important;
+  aspect-ratio: 1 / 1;
+  min-width: 28px !important;
+  min-height: 28px !important;
   border-radius: 50%;
   background: var(--surface2);
   border: 1.5px solid var(--surface3);
@@ -1522,19 +1526,23 @@ async function applyTrim() {
     const wavBlob = audioBufferToWav(trimmedBuffer);
     S.audioBlob = wavBlob;
     S.audioURL = URL.createObjectURL(wavBlob);
+    
+    player.pause();
+    player.src = '';
+    player.load();
     player.src = S.audioURL;
     
-    // Reset trimmer
+    // Explicitly update duration on load
     player.onloadedmetadata = () => {
       const dur = player.duration;
+      document.getElementById('total-time').textContent = formatTime(Math.round(dur));
       const si = document.getElementById('trim-start');
       const ei = document.getElementById('trim-end');
       si.max = dur; ei.max = dur;
       si.value = 0; ei.value = dur;
       updateTrimUI();
+      toast('Audio trimmed!', true);
     };
-    
-    toast('Audio trimmed!', true);
   } catch (e) {
     console.error(e);
     toast('Trim failed', false);
