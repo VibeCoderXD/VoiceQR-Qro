@@ -1022,7 +1022,23 @@ function navTo(page) {
     document.getElementById('card-record').classList.add('active');
     document.getElementById('nav-home').classList.add('active');
     setStep(1);
+    resetRecordUI();
   }
+}
+
+function resetRecordUI() {
+  document.getElementById('timer').textContent = '0:00';
+  document.getElementById('timer').classList.remove('live');
+  document.getElementById('rec-status').textContent = 'Tap microphone to begin';
+  document.getElementById('rec-status').classList.remove('live');
+  document.getElementById('record-btn').classList.remove('recording');
+  document.getElementById('mic-svg').style.display = 'block';
+  document.getElementById('stop-svg').style.display = 'none';
+  ['ring1','ring2','ring3'].forEach(id => document.getElementById(id).classList.remove('pulsing'));
+  document.querySelectorAll('.wbar').forEach(b => {
+    b.style.height = '4px';
+    b.classList.remove('active');
+  });
 }
 
 function hideAllCards() {
@@ -1471,8 +1487,6 @@ function startOver() {
     isRecording: false, audioBlob: null, audioChunks: [],
     title: 'Recording', seconds: 0
   });
-  document.getElementById('timer').textContent = '0:00';
-  document.getElementById('rec-status').textContent = 'Tap microphone to begin';
   document.getElementById('audio-player').src = '';
   document.getElementById('rec-title-input').value = '';
   document.getElementById('process-error').classList.remove('show');
