@@ -156,6 +156,7 @@ body {
   font-size: 11px; font-weight: 600;
   color: var(--muted);
   transition: all 0.4s ease;
+  flex-shrink: 0;
 }
 .step-circle.active {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -1047,7 +1048,9 @@ textarea::placeholder { color: var(--muted); }
 
     <div class="summary-card">
       <div class="summary-title-label">Title</div>
-      <input type="text" id="rec-title-input" class="tts-input" style="width:100%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:12px; color:white; font-family:inherit; margin-bottom:10px;" placeholder="Recording Name">
+      <input type="text" id="rec-title-input" 
+        style="width:100%; background:var(--surface2); border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:14px; color:var(--text); font-family:inherit; font-size:15px; outline:none; margin-bottom:10px;" 
+        placeholder="Recording Name">
     </div>
 
     <div class="btn-row">
