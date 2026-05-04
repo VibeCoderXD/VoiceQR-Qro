@@ -615,6 +615,37 @@ textarea::placeholder { color: var(--muted); }
 }
 
 
+/* ── Mic Select ── */
+.mic-select-wrap {
+  margin-top: 32px;
+  width: 100%;
+  max-width: 240px;
+}
+.mic-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.mic-dropdown {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23b08d4b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 5 3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
 /* ── Summary Card ── */
 .summary-card {
   background: rgba(200,169,110,0.06);
@@ -973,6 +1004,14 @@ textarea::placeholder { color: var(--muted); }
           <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
         </div>
         <div class="rec-status" id="rec-status">Tap microphone to begin</div>
+
+        <!-- Mic Source Selector -->
+        <div class="mic-select-wrap">
+          <div class="mic-label">Recording Source</div>
+          <select id="mic-select" class="mic-dropdown" onchange="S.selectedMicId = this.value">
+            <option value="">Default Microphone</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1250,7 +1289,13 @@ async function toggleRecord() {
 
 async function startRecord() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const constraints = { 
+      audio: S.selectedMicId ? { deviceId: { exact: S.selectedMicId } } : true 
+    };
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    
+    // Refresh mic list now that we have permission (to get labels)
+    updateMicList();
     S.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const src = S.audioCtx.createMediaStreamSource(stream);
     S.analyser = S.audioCtx.createAnalyser();
@@ -1801,6 +1846,32 @@ function toast(msg, success = true) {
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
+async function updateMicList() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    const select = document.getElementById('mic-select');
+    const currentVal = select.value;
+    
+    select.innerHTML = '';
+    mics.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.deviceId;
+      opt.textContent = m.label || `Microphone ${select.length + 1}`;
+      select.appendChild(opt);
+    });
+    
+    if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+      select.value = currentVal;
+    }
+  } catch (e) { console.error(e); }
+}
+
+// Initial mic list load
+updateMicList();
+// Re-check when devices change
+navigator.mediaDevices.ondevicechange = updateMicList;
+
 setStep(1);
 </script>
 </body>
