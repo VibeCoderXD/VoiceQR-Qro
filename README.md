@@ -1,73 +1,54 @@
-# Qro 🎙
+# Qro 🎙️✨
 
-> Record audio → Upload → Get a QR code instantly. Built for teachers.
+**Narrate. Trim. Share.**
 
-## Features
-| Feature | Tool | Cost |
-|---------|------|------|
-| 🎙 Record | Browser | Free |
-| ☁️ Audio Storage | Cloudinary | Free (25GB) |
-| 📱 QR Code | qrcode.js | Free |
-| 🗂 History | localStorage (Client) | Free |
-| 📤 Share | Web Share API | Free |
+Qro is a premium, high-performance web tool designed for educators, creators, and professionals to instantly convert voice notes into shareable QR codes. Built with a stunning ivory-and-gold aesthetic, it combines seamless recording with a powerful built-in audio trimmer.
 
----
+![Qro Preview](https://res.cloudinary.com/degbpmmp3/image/upload/v1714856000/qro_mockup.png) *(Placeholder: Update with real screenshot)*
 
-## Setup
+## ✨ Features
 
-### 1. Configure Cloudinary (Unsigned)
+- **🎙️ Seamless Recording**: One-tap recording with live waveform feedback.
+- **✂️ Built-in Trimmer**: Precise, frame-accurate audio trimming using the Web Audio API.
+- **✨ Premium UI**: A sophisticated light-mode interface with floating glassmorphism and gold accents.
+- **📂 Personal Library**: Local history with the ability to rename, replay, and delete past recordings.
+- **⚡ Instant QR**: Automatic upload to Cloudinary and QR code generation for instant sharing.
+- **🔊 Custom Player**: Bespoke audio player with a live reactive visualizer during playback.
 
-1.  **Create Account**: Sign up at [Cloudinary](https://cloudinary.com).
-2.  **Unsigned Upload Preset**:
-    *   Go to **Settings** (gear icon) → **Upload**.
-    *   Scroll to **Upload presets** → **Add upload preset**.
-    *   Set **Signing Mode** to **Unsigned**.
-    *   **Restrict (Optional but Recommended)**:
-        *   **Resource type**: Set to `video` (Cloudinary uses this for audio).
-        *   **Allowed formats**: `mp3, wav, webm`.
-    *   Copy the **Preset Name**.
-3.  **Cloud Name**: Copy your **Cloud Name** from the Dashboard.
+## 🛠️ Technology Stack
 
-### 2. Clone & Configure
+- **Frontend**: Vanilla JS, HTML5, CSS3 (with CSS Variables & Glassmorphism)
+- **Audio Engine**: Web Audio API, MediaRecorder API
+- **Backend**: Vercel Serverless Functions (Node.js 20)
+- **Storage**: Cloudinary (Audio Storage)
+- **QR Generation**: QRCode.js
 
-```bash
-git clone https://github.com/YOUR_USERNAME/qro.git
-cd qro
-cp .env.example .env.local
-# Fill in your Cloud Name and Preset Name in .env.local
-```
+## 🚀 Getting Started
 
-### 3. Deploy to Vercel
+### Prerequisites
+- [Vercel CLI](https://vercel.com/download) (for local development)
+- Cloudinary Account (for audio storage)
 
-```bash
-npm install -g vercel
-vercel login
-vercel
-```
+### Local Development
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/VibeCoderXD/VoiceQR-Qro.git
+   ```
+2. Create a `.env` file and add your Cloudinary keys:
+   ```env
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_UPLOAD_PRESET=your_upload_preset
+   ```
+3. Run the local server:
+   ```bash
+   node server.mjs
+   ```
+4. Open `http://localhost:3000`
 
----
+## 📦 Deployment
 
-## Local Development
-
-```bash
-npm install
-vercel dev
-# Opens at http://localhost:3000
-```
+This project is optimized for **Vercel Zero-Config**. Simply push to GitHub and connect your repository to Vercel. Don't forget to add your Cloudinary environment variables in the Vercel dashboard.
 
 ---
 
-## Environment Variables
-
-```
-CLOUDINARY_CLOUD_NAME
-CLOUDINARY_UPLOAD_PRESET
-```
-
----
-
-## Why this works
-*   **One network call**: Record → Upload → QR. Fast and reliable.
-*   **Secure**: No API keys exposed in the browser. Uses a proxy serverless function.
-*   **Mobile First**: Works perfectly on mobile browsers.
-*   **Persistent**: Your recordings stay in your device's library (`localStorage`).
+Built with ❤️ by [VibeCoderXD](https://github.com/VibeCoderXD)
