@@ -49,8 +49,16 @@ export default async function handler(req, res) {
     const FormData = (await import('form-data')).default;
     const fetch = (await import('node-fetch')).default;
 
+    const mimeType = fileName.endsWith('.mp3') ? 'audio/mpeg'
+      : fileName.endsWith('.wav') ? 'audio/wav'
+      : fileName.endsWith('.m4a') ? 'audio/mp4'
+      : fileName.endsWith('.ogg') ? 'audio/ogg'
+      : fileName.endsWith('.flac') ? 'audio/flac'
+      : fileName.endsWith('.aac') ? 'audio/aac'
+      : 'audio/webm';
+
     const form = new FormData();
-    form.append('file', fileBuffer, { filename: fileName, contentType: 'audio/webm' });
+    form.append('file', fileBuffer, { filename: fileName, contentType: mimeType });
     form.append('upload_preset', uploadPreset);
     form.append('resource_type', 'video');
 

@@ -248,6 +248,27 @@ body {
   font-weight: 600;
 }
 
+/* ── Upload Dropzone ── */
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  border: 2px dashed rgba(176,141,75,0.3);
+  border-radius: var(--radius);
+  background: rgba(176,141,75,0.03);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.upload-dropzone:hover,
+.upload-dropzone.drag-over {
+  border-color: var(--accent);
+  background: rgba(176,141,75,0.07);
+}
+
 /* ── Record Button ── */
 .record-center {
   display: flex;
@@ -913,6 +934,12 @@ textarea::placeholder { color: var(--muted); }
     <div class="card-sub">Record your voice to generate a shareable QR code.</div>
 
 
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-record-btn" onclick="switchMode('record')">🎙 Record</button>
+      <button class="mode-btn" id="mode-upload-btn" onclick="switchMode('upload')">📂 Upload File</button>
+    </div>
+
     <!-- Record mode -->
     <div id="record-mode">
       <div class="record-center">
@@ -941,6 +968,32 @@ textarea::placeholder { color: var(--muted); }
           <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
         </div>
         <div class="rec-status" id="rec-status">Tap microphone to begin</div>
+      </div>
+    </div>
+
+    <!-- Upload mode -->
+    <div id="upload-mode" style="display:none;">
+      <label class="upload-dropzone" id="drop-zone">
+        <input type="file" id="file-input" accept="audio/*" style="display:none;">
+        <div style="font-size:2.2rem; margin-bottom:10px;">🎵</div>
+        <div style="font-size:15px; font-weight:600; color:var(--text); margin-bottom:6px;">Drop audio here or tap to browse</div>
+        <div style="font-size:12px; color:var(--muted); font-weight:300;">MP3 · WAV · M4A · OGG · FLAC · AAC · any format</div>
+      </label>
+
+      <div id="upload-preview-box" class="preview-box" style="display:none; margin-top:16px;">
+        <div class="preview-label">Selected File</div>
+        <div class="preview-meta">
+          <span class="meta-chip gold" id="upload-file-name">—</span>
+          <span class="meta-chip" id="upload-file-size">—</span>
+        </div>
+        <audio id="upload-player" controls style="width:100%; border-radius:12px; margin-bottom:4px;"></audio>
+      </div>
+
+      <div style="margin-top:16px;">
+        <input type="text" id="upload-title-input"
+          style="width:100%; background:var(--surface2); border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-family:inherit; font-size:14px; outline:none; margin-bottom:12px; transition:border-color 0.2s;"
+          placeholder="Recording name (optional)">
+        <button class="btn btn-gold" id="upload-submit-btn" onclick="submitUploadedFile()" disabled>✨ Upload & Generate QR</button>
       </div>
     </div>
 
@@ -1108,8 +1161,17 @@ function navTo(page) {
     document.getElementById('card-record').classList.add('active');
     document.getElementById('nav-home').classList.add('active');
     setStep(1);
+    switchMode('record'); // Reset to record mode
     resetRecordUI();
   }
+}
+
+function switchMode(mode) {
+  const isRecord = mode === 'record';
+  document.getElementById('record-mode').style.display = isRecord ? '' : 'none';
+  document.getElementById('upload-mode').style.display = isRecord ? 'none' : '';
+  document.getElementById('mode-record-btn').classList.toggle('active', isRecord);
+  document.getElementById('mode-upload-btn').classList.toggle('active', !isRecord);
 }
 
 function resetRecordUI() {
@@ -1332,6 +1394,83 @@ function startPlaybackVisuals() {
     S.playbackAnim = requestAnimationFrame(draw);
   }
   draw();
+}
+
+// ── File Upload Feature ────────────────────
+let uploadedFileBlob = null;
+
+setTimeout(() => {
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  if (!dropZone || !fileInput) return;
+
+  dropZone.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) handleFileSelect(e.target.files[0]);
+  });
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('audio/')) handleFileSelect(file);
+    else toast('Please drop an audio file', false);
+  });
+}, 500);
+
+function handleFileSelect(file) {
+  uploadedFileBlob = file;
+  const previewBox = document.getElementById('upload-preview-box');
+  const player = document.getElementById('upload-player');
+  const submitBtn = document.getElementById('upload-submit-btn');
+
+  player.src = URL.createObjectURL(file);
+  document.getElementById('upload-file-name').textContent = file.name;
+  document.getElementById('upload-file-size').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+
+  const titleInput = document.getElementById('upload-title-input');
+  if (!titleInput.value) {
+    titleInput.value = file.name.replace(/\.[^/.]+$/, ''); // strip extension
+  }
+
+  previewBox.style.display = 'block';
+  submitBtn.disabled = false;
+}
+
+async function submitUploadedFile() {
+  if (!uploadedFileBlob) return;
+
+  const titleInput = document.getElementById('upload-title-input');
+  S.title = titleInput.value.trim() || uploadedFileBlob.name.replace(/\.[^/.]+$/, '') || 'Upload_' + Date.now();
+  S.seconds = 0; 
+
+  S.audioBlob = uploadedFileBlob;
+
+  showCard('process');
+  setStep(2);
+
+  try {
+    const ext = uploadedFileBlob.name.split('.').pop() || 'audio';
+    const form = new FormData();
+    form.append('audio', uploadedFileBlob, S.title.replace(/\s+/g, '_') + '.' + ext);
+
+    const upRes = await fetch('/api/upload', { method: 'POST', body: form });
+    const upData = await upRes.json();
+
+    if (!upData.url) throw new Error(upData.error || 'Upload failed');
+    S.cloudURL = upData.url;
+
+    setTimeout(() => generateQR(), 600);
+  } catch (e) {
+    document.getElementById('process-error').textContent = '⚠ ' + e.message;
+    document.getElementById('process-error').classList.add('show');
+  }
 }
 
 function updateTrimUI() {
