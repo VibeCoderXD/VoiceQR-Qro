@@ -993,7 +993,7 @@ textarea::placeholder { color: var(--muted); }
         <input type="text" id="upload-title-input"
           style="width:100%; background:var(--surface2); border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:12px 14px; color:var(--text); font-family:inherit; font-size:14px; outline:none; margin-bottom:12px; transition:border-color 0.2s;"
           placeholder="Recording name (optional)">
-        <button class="btn btn-gold" id="upload-submit-btn" onclick="submitUploadedFile()" disabled>✨ Upload & Generate QR</button>
+        <button class="btn btn-gold" id="upload-submit-btn" onclick="continueToPreview()" disabled>✨ Edit & Continue</button>
       </div>
     </div>
 
@@ -1297,12 +1297,18 @@ function stopRecord() {
 }
 
 function onRecordStop() {
-  S.audioBlob = new Blob(S.audioChunks, { type: 'audio/webm' });
-  S.audioURL = URL.createObjectURL(S.audioBlob);
+  const blob = new Blob(S.audioChunks, { type: 'audio/webm' });
+  const title = 'Recording ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  setupPreview(blob, title);
+}
+
+function setupPreview(blob, title) {
+  S.audioBlob = blob;
+  S.audioURL = URL.createObjectURL(blob);
   
   const player = document.getElementById('audio-player');
   player.src = S.audioURL;
-  document.getElementById('rec-title-input').value = 'Recording ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  document.getElementById('rec-title-input').value = title;
   
   // Create Preview Bars
   const wf = document.getElementById('preview-waveform');
@@ -1441,34 +1447,11 @@ function handleFileSelect(file) {
   submitBtn.disabled = false;
 }
 
-async function submitUploadedFile() {
+function continueToPreview() {
   if (!uploadedFileBlob) return;
-
   const titleInput = document.getElementById('upload-title-input');
-  S.title = titleInput.value.trim() || uploadedFileBlob.name.replace(/\.[^/.]+$/, '') || 'Upload_' + Date.now();
-  S.seconds = 0; 
-
-  S.audioBlob = uploadedFileBlob;
-
-  showCard('process');
-  setStep(2);
-
-  try {
-    const ext = uploadedFileBlob.name.split('.').pop() || 'audio';
-    const form = new FormData();
-    form.append('audio', uploadedFileBlob, S.title.replace(/\s+/g, '_') + '.' + ext);
-
-    const upRes = await fetch('/api/upload', { method: 'POST', body: form });
-    const upData = await upRes.json();
-
-    if (!upData.url) throw new Error(upData.error || 'Upload failed');
-    S.cloudURL = upData.url;
-
-    setTimeout(() => generateQR(), 600);
-  } catch (e) {
-    document.getElementById('process-error').textContent = '⚠ ' + e.message;
-    document.getElementById('process-error').classList.add('show');
-  }
+  const title = titleInput.value.trim() || uploadedFileBlob.name.replace(/\.[^/.]+$/, '');
+  setupPreview(uploadedFileBlob, title);
 }
 
 function updateTrimUI() {
