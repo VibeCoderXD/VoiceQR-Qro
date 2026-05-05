@@ -648,23 +648,51 @@ textarea::placeholder { color: var(--muted); }
 }
 
 /* ── Enhancement Modes ── */
+.enhance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
 .mode-enhance-btn {
-  padding: 8px 14px;
-  border-radius: 50px;
-  border: 1px solid rgba(176,141,75,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(176,141,75,0.08);
   background: var(--surface2);
   color: var(--muted2);
   font-family: 'Outfit', sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mode-enhance-btn:hover {
+  background: var(--surface3);
+  border-color: rgba(176,141,75,0.2);
 }
 .mode-enhance-btn.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #0a0a0f;
-  border-color: transparent;
+  background: white;
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(176,141,75,0.12);
   font-weight: 600;
+}
+.enhance-desc-box {
+  background: rgba(176,141,75,0.03);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 12px;
+  border-left: 3px solid var(--accent);
+}
+#enhance-desc {
+  font-size: 11px;
+  color: var(--muted2);
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 /* ── Summary Card ── */
@@ -1028,14 +1056,16 @@ textarea::placeholder { color: var(--muted); }
 
         <!-- Audio Enhancement Mode -->
         <div class="mic-select-wrap" style="max-width:100%; margin-top:24px;">
-          <div class="mic-label">Audio Enhancement Mode</div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+          <div class="mic-label">Enhancement Profile</div>
+          <div class="enhance-grid">
             <button class="mode-enhance-btn active" id="mode-default" onclick="setEnhanceMode('default')">🎙 Default</button>
-            <button class="mode-enhance-btn" id="mode-voice" onclick="setEnhanceMode('voice')">🗣 Voice Clear</button>
-            <button class="mode-enhance-btn" id="mode-noise" onclick="setEnhanceMode('noise')">🔇 Noise Suppress</button>
+            <button class="mode-enhance-btn" id="mode-voice" onclick="setEnhanceMode('voice')">🗣 Voice</button>
+            <button class="mode-enhance-btn" id="mode-noise" onclick="setEnhanceMode('noise')">🔇 Noise</button>
             <button class="mode-enhance-btn" id="mode-studio" onclick="setEnhanceMode('studio')">🎚 Studio</button>
           </div>
-          <div id="enhance-desc" style="font-size:11px; color:var(--muted); margin-top:8px; font-weight:300; line-height:1.5;">Raw mic input, no processing applied.</div>
+          <div class="enhance-desc-box">
+            <div id="enhance-desc">Raw mic input, no processing applied.</div>
+          </div>
         </div>
 
         <!-- Mic Source Selector -->
