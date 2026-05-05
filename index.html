@@ -1848,29 +1848,43 @@ function toast(msg, success = true) {
 // ══════════════════════════════════════════
 async function updateMicList() {
   try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
+    // If labels are empty, try a quick "warm-up" to get permission
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    if (devices.every(d => !d.label)) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        devices = await navigator.mediaDevices.enumerateDevices();
+      } catch (e) {}
+    }
+
     const mics = devices.filter(d => d.kind === 'audioinput');
     const select = document.getElementById('mic-select');
     const currentVal = select.value;
     
     select.innerHTML = '';
-    mics.forEach(m => {
+    mics.forEach((m, i) => {
       const opt = document.createElement('option');
       opt.value = m.deviceId;
-      opt.textContent = m.label || `Microphone ${select.length + 1}`;
+      // Clean up generic labels
+      let label = m.label || `Microphone ${i + 1}`;
+      if (label.includes('Default - ')) label = label.replace('Default - ', '');
+      opt.textContent = label;
       select.appendChild(opt);
     });
     
     if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
       select.value = currentVal;
+    } else if (mics.length > 0 && !S.selectedMicId) {
+      S.selectedMicId = mics[0].deviceId;
     }
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error('Mic list error:', e); }
 }
 
 // Initial mic list load
 updateMicList();
-// Re-check when devices change
-navigator.mediaDevices.ondevicechange = updateMicList;
+// Re-check when devices change (e.g. bluetooth connected)
+navigator.mediaDevices.addEventListener('devicechange', updateMicList);
 
 setStep(1);
 </script>
