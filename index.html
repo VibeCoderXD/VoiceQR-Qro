@@ -647,6 +647,26 @@ textarea::placeholder { color: var(--muted); }
   background-position: right 12px center;
 }
 
+/* ── Enhancement Modes ── */
+.mode-enhance-btn {
+  padding: 8px 14px;
+  border-radius: 50px;
+  border: 1px solid rgba(176,141,75,0.2);
+  background: var(--surface2);
+  color: var(--muted2);
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.mode-enhance-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #0a0a0f;
+  border-color: transparent;
+  font-weight: 600;
+}
+
 /* ── Summary Card ── */
 .summary-card {
   background: rgba(200,169,110,0.06);
@@ -1006,6 +1026,18 @@ textarea::placeholder { color: var(--muted); }
         </div>
         <div class="rec-status" id="rec-status">Tap microphone to begin</div>
 
+        <!-- Audio Enhancement Mode -->
+        <div class="mic-select-wrap" style="max-width:100%; margin-top:24px;">
+          <div class="mic-label">Audio Enhancement Mode</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+            <button class="mode-enhance-btn active" id="mode-default" onclick="setEnhanceMode('default')">🎙 Default</button>
+            <button class="mode-enhance-btn" id="mode-voice" onclick="setEnhanceMode('voice')">🗣 Voice Clear</button>
+            <button class="mode-enhance-btn" id="mode-noise" onclick="setEnhanceMode('noise')">🔇 Noise Suppress</button>
+            <button class="mode-enhance-btn" id="mode-studio" onclick="setEnhanceMode('studio')">🎚 Studio</button>
+          </div>
+          <div id="enhance-desc" style="font-size:11px; color:var(--muted); margin-top:8px; font-weight:300; line-height:1.5;">Raw mic input, no processing applied.</div>
+        </div>
+
         <!-- Mic Source Selector -->
         <div class="mic-select-wrap">
           <div class="mic-label">Recording Source</div>
@@ -1189,7 +1221,22 @@ const S = {
   analyser: null,
   animFrame: null,
   audioCtx: null,
+  enhanceMode: 'default', // default, voice, noise, studio
 };
+
+function setEnhanceMode(mode) {
+  S.enhanceMode = mode;
+  document.querySelectorAll('.mode-enhance-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-' + mode).classList.add('active');
+
+  const descs = {
+    default: 'Raw mic input, no processing applied.',
+    voice:   'Echo cancellation + auto gain. Best for quiet rooms.',
+    noise:   'Aggressive noise suppression + high-pass filter. Best for noisy environments.',
+    studio:  'Full chain: filters + compressor + gain boost. Best overall quality.'
+  };
+  document.getElementById('enhance-desc').textContent = descs[mode];
+}
 
 // ══════════════════════════════════════════
 // NAV
@@ -1290,20 +1337,71 @@ async function toggleRecord() {
 
 async function startRecord() {
   try {
-    const constraints = { 
-      audio: S.selectedMicId ? { deviceId: { exact: S.selectedMicId } } : true 
+    const mode = S.enhanceMode;
+
+    const constraints = {
+      audio: {
+        deviceId: S.selectedMicId ? { exact: S.selectedMicId } : undefined,
+        echoCancellation: mode !== 'default',
+        noiseSuppression: mode === 'noise' || mode === 'studio',
+        autoGainControl:  mode === 'voice' || mode === 'studio',
+        sampleRate: 48000,
+        channelCount: 1
+      }
     };
+
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    
-    // Refresh mic list now that we have permission (to get labels)
     updateMicList();
+
     S.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const src = S.audioCtx.createMediaStreamSource(stream);
+    const source = S.audioCtx.createMediaStreamSource(stream);
+
     S.analyser = S.audioCtx.createAnalyser();
     S.analyser.fftSize = 64;
-    src.connect(S.analyser);
 
-    S.mediaRecorder = new MediaRecorder(stream);
+    if (mode === 'default' || mode === 'voice') {
+      source.connect(S.analyser);
+      S.mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus' : 'audio/webm',
+        audioBitsPerSecond: 128000
+      });
+    } else {
+      // ── noise or studio mode: build full filter chain ──
+      const highPass = S.audioCtx.createBiquadFilter();
+      highPass.type = 'highpass';
+      highPass.frequency.value = mode === 'noise' ? 120 : 80;
+
+      const lowPass = S.audioCtx.createBiquadFilter();
+      lowPass.type = 'lowpass';
+      lowPass.frequency.value = 8000;
+
+      const compressor = S.audioCtx.createDynamicsCompressor();
+      compressor.threshold.value = mode === 'studio' ? -24 : -30;
+      compressor.knee.value      = 20;
+      compressor.ratio.value     = mode === 'studio' ? 12 : 8;
+      compressor.attack.value    = 0.003;
+      compressor.release.value   = 0.25;
+
+      const gain = S.audioCtx.createGain();
+      gain.gain.value = mode === 'studio' ? 1.5 : 1.2;
+
+      const cleanDest = S.audioCtx.createMediaStreamDestination();
+
+      source.connect(highPass);
+      highPass.connect(lowPass);
+      lowPass.connect(compressor);
+      compressor.connect(gain);
+      gain.connect(cleanDest);
+      gain.connect(S.analyser);
+
+      S.mediaRecorder = new MediaRecorder(cleanDest.stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus' : 'audio/webm',
+        audioBitsPerSecond: 128000
+      });
+    }
+
     S.audioChunks = [];
     S.mediaRecorder.ondataavailable = e => S.audioChunks.push(e.data);
     S.mediaRecorder.onstop = onRecordStop;
@@ -1328,6 +1426,7 @@ async function startRecord() {
 
     animWave();
   } catch(e) {
+    console.error(e);
     toast('Microphone access denied', false);
   }
 }
