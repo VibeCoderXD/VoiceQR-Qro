@@ -1243,15 +1243,21 @@ const S = {
   mediaRecorder: null,
   audioChunks: [],
   audioBlob: null,
-  audioURL: '',         // local object URL
-  cloudURL: '',         // Cloudinary URL
+  audioURL: '',
+  cloudURL: '',
+  playerURL: '',
   title: 'Recording',
   seconds: 0,
   timerInt: null,
   analyser: null,
   animFrame: null,
   audioCtx: null,
-  enhanceMode: 'default', // default, voice, noise, studio
+  enhanceMode: 'default',
+  isPlaying: false,
+  selectedMicId: null,
+  playSource: null,
+  playAnalyser: null,
+  playbackAnim: null,
 };
 
 function setEnhanceMode(mode) {
@@ -1798,7 +1804,14 @@ async function startProcessing() {
     S.title = inputTitle || 'Recording_' + Date.now();
     
     const form = new FormData();
-    form.append('audio', S.audioBlob, S.title.replace(/\s+/g, '_') + '.webm');
+    const t = S.audioBlob.type || '';
+    const ext = t.includes('wav') ? '.wav'
+      : t.includes('mpeg') || t.includes('mp3') ? '.mp3'
+      : t.includes('ogg') ? '.ogg'
+      : t.includes('flac') ? '.flac'
+      : t.includes('aac') ? '.aac'
+      : '.webm';
+    form.append('audio', S.audioBlob, S.title.replace(/\s+/g, '_') + ext);
     
     const upRes = await fetch('/api/upload', { method: 'POST', body: form });
     const upData = await upRes.json();
@@ -1817,23 +1830,26 @@ async function startProcessing() {
 // ══════════════════════════════════════════
 // QR
 // ══════════════════════════════════════════
-function generateQR() {
+function generateQR(save = true) {
   if (!S.cloudURL) { toast('No audio URL yet', false); return; }
+
+  S.playerURL = `${location.origin}/play.html?src=${encodeURIComponent(S.cloudURL)}&title=${encodeURIComponent(S.title.replace(/_/g, ' '))}`;
 
   document.getElementById('qr-el').innerHTML = '';
   new QRCode(document.getElementById('qr-el'), {
-    text: S.cloudURL,
+    text: S.playerURL,
     width: 220, height: 220,
     colorDark: '#13131a',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.M
   });
 
-  document.getElementById('qr-url-text').textContent = S.cloudURL;
+  document.getElementById('qr-label').textContent = S.title.replace(/_/g, ' ');
+  document.getElementById('qr-url-text').textContent = S.playerURL;
 
   showCard('qr');
   setStep(3);
-  saveToHistory();
+  if (save) saveToHistory();
 }
 
 function downloadQR() {
@@ -1859,15 +1875,17 @@ function downloadQR() {
 }
 
 async function shareQR() {
+  const url = S.playerURL || S.cloudURL;
   if (navigator.share) {
     try {
-      await navigator.share({ title: S.title.replace(/_/g,' '), url: S.cloudURL });
+      await navigator.share({ title: S.title.replace(/_/g, ' '), url });
     } catch {}
   } else { copyURL(); }
 }
 
 function copyURL() {
-  navigator.clipboard.writeText(S.cloudURL)
+  const url = S.playerURL || S.cloudURL;
+  navigator.clipboard.writeText(url)
     .then(() => toast('Link copied!', true))
     .catch(() => { toast('Copy failed', false); });
 }
@@ -1934,17 +1952,9 @@ function loadHistoryItem(id) {
   if (!entry) return;
   S.cloudURL = entry.url;
   S.title = entry.title;
-  document.getElementById('qr-el').innerHTML = '';
-  new QRCode(document.getElementById('qr-el'), {
-    text: entry.url, width: 220, height: 220,
-    colorDark: '#13131a', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M
-  });
-  document.getElementById('qr-url-text').textContent = entry.url;
-  document.getElementById('qr-label').textContent = entry.title.replace(/_/g,' ');
+  S.seconds = 0;
   navTo('home');
-  showCard('qr');
-  setStep(3);
+  generateQR(false);
 }
 
 // ══════════════════════════════════════════
@@ -1953,7 +1963,9 @@ function loadHistoryItem(id) {
 function startOver() {
   Object.assign(S, {
     isRecording: false, audioBlob: null, audioChunks: [],
-    title: 'Recording', seconds: 0
+    title: 'Recording', seconds: 0,
+    cloudURL: '', audioURL: '', playerURL: '',
+    playSource: null, playAnalyser: null, isPlaying: false,
   });
   document.getElementById('audio-player').src = '';
   document.getElementById('rec-title-input').value = '';
